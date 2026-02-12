@@ -1,94 +1,733 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 3.0 긴급 복구 도구</title>
-    <style>
-        :root { --primary: #4285f4; --bg: #f8f9fa; --text: #202124; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 550px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        h2 { margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 10px; }
-        input, select, button { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #dadce0; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        button:hover { background: #174ea6; transform: translateY(-1px); }
-        #log { background: #1e1e1e; color: #dcdcdc; padding: 20px; border-radius: 8px; min-height: 250px; white-space: pre-wrap; font-family: 'Consolas', monospace; font-size: 14px; margin-top: 20px; border-left: 5px solid #4285f4; }
-        .err-text { color: #ff6b6b; }
-        .ok-text { color: #51cf66; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>청개구리 사전점검 AI앱 v18.3S</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --p:#0A6B5C;--pl:#12B89A;--pg:rgba(18,184,154,.12);
+  --ac:#FF6B35;--bg:#F4F6F9;--card:#FFF;
+  --tx:#1A2332;--ts:#5A6B7F;--th:#94A3B8;
+  --bd:#E8ECF1;--bl:#F1F4F8;
+  --dn:#E74C3C;--dnb:#FFF5F5;--wr:#F39C12;--wrb:#FFFBE6;
+  --pu:#7C3AED;--pub:#F5F0FF;
+  --r:14px;--tr:all .2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);line-height:1.6;-webkit-font-smoothing:antialiased;display:flex;justify-content:center;min-height:100vh}
+.app{width:100%;max-width:480px;min-height:100vh;background:#FAFBFC;position:relative;padding-bottom:90px}
+
+/* Header */
+.hd{background:linear-gradient(135deg,#0A2E23 0%,#0A6B5C 35%,#12B89A 70%,#0A6B5C 100%);padding:0;position:relative;overflow:hidden}
+.hd::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(18,184,154,.25) 0%,transparent 50%),radial-gradient(circle at 70% 60%,rgba(255,107,53,.1) 0%,transparent 40%);animation:hdBg 8s ease-in-out infinite alternate}
+@keyframes hdBg{0%{transform:translate(0,0)}100%{transform:translate(-3%,3%)}}
+.hd::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:14px;background:#FAFBFC;border-radius:14px 14px 0 0}
+.hd-top{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 18px;position:relative;z-index:2}
+.hd-in{display:flex;align-items:center;gap:10px}
+.hd-logo{width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.15);flex-shrink:0;overflow:hidden;backdrop-filter:blur(10px)}
+.hd-logo img{width:100%;height:100%;object-fit:cover}
+.hd-title{color:#fff;font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;letter-spacing:-.02em;text-shadow:0 1px 8px rgba(0,0,0,.15)}
+.hd-tags{display:flex;gap:5px;flex-shrink:0}
+.tag{font-size:.6rem;padding:2px 7px;border-radius:5px;font-weight:700}
+.tag-free{background:var(--ac);color:#fff}
+.tag-v{background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.15);cursor:pointer;backdrop-filter:blur(6px)}
+.tag-v.dev{background:var(--pu);box-shadow:0 0 10px rgba(124,58,237,.5)}
+/* Mode Checkbox Bar (below header) */
+.mode-bar-out{display:flex;gap:6px;padding:6px 8px;background:var(--card);border-bottom:1px solid var(--bl)}
+.mode-ck{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:10px;cursor:pointer;transition:var(--tr);border:1.5px solid var(--bd);background:var(--bg);flex:1;justify-content:center}
+.mode-ck:hover{border-color:var(--pl)}
+.mode-ck.active{background:var(--pg);border-color:var(--pl);box-shadow:0 0 8px rgba(18,184,154,.1)}
+.mode-ck.active-pro{background:var(--pub);border-color:var(--pu);box-shadow:0 0 8px rgba(124,58,237,.1)}
+.mode-ck input[type="checkbox"]{width:16px;height:16px;accent-color:var(--p);cursor:pointer;flex-shrink:0}
+.mode-ck .mc-lb{font-size:.78rem;font-weight:700;color:var(--ts)}
+.mode-ck .mc-ic{font-size:.72rem;color:var(--th);margin-right:2px}
+.mode-ck.active .mc-lb{color:var(--p)}
+.mode-ck.active .mc-ic{color:var(--p)}
+.mode-ck.active-pro .mc-lb{color:var(--pu)}
+.mode-ck.active-pro .mc-ic{color:var(--pu)}
+
+/* Status */
+.st{display:flex;align-items:center;justify-content:space-between;padding:8px 10px}
+.st-chip{display:flex;align-items:center;gap:7px;background:var(--card);padding:7px 12px;border-radius:30px;font-size:.75rem;font-weight:600;color:var(--ts);box-shadow:0 1px 3px rgba(0,0,0,.04);border:1px solid var(--bl)}
+.st-dot{width:7px;height:7px;border-radius:50%;background:var(--pl);animation:pulse 2s infinite}
+.st-dot.err{background:var(--dn);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.st-help{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--bd);padding:7px 12px;border-radius:30px;font-size:.75rem;font-weight:700;color:var(--ts);cursor:pointer}
+
+/* Steps */
+.steps{display:flex;align-items:center;justify-content:center;gap:0;padding:4px 10px 6px}
+.sn{width:28px;height:28px;border-radius:50%;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;background:var(--bl);color:var(--th);transition:var(--tr);flex-shrink:0}
+.sn.on{background:var(--p);color:#fff;box-shadow:0 0 0 3px var(--pg)}
+.sn.ok{background:var(--pl);color:#fff}
+.sl{height:2px;width:32px;background:var(--bl);transition:var(--tr)}
+.sl.ok{background:var(--pl)}
+
+/* Section */
+.sec{background:var(--card);margin:0 6px 6px;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.05);border:1px solid var(--bl)}
+.sec-t{font-size:.8rem;font-weight:800;color:var(--ts);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.sec-t .n{background:var(--p);color:#fff;width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:900}
+
+/* Inputs */
+.ig{margin-bottom:9px}
+.ig:last-child{margin-bottom:0}
+.il{font-size:.72rem;font-weight:700;color:var(--th);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.if{width:100%;padding:9px 11px;font-size:.85rem;border:1.5px solid var(--bd);border-radius:10px;background:#FAFBFC;color:var(--tx);font-family:inherit;transition:var(--tr);outline:none}
+.if:focus{border-color:var(--pl);background:#fff;box-shadow:0 0 0 3px var(--pg)}
+.if::placeholder{color:var(--th)}
+select.if{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+textarea.if{resize:none;height:85px;line-height:1.6}
+.row{display:flex;gap:9px}
+.row>*{flex:1}
+
+/* Photo */
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pc{aspect-ratio:3/4;border-radius:var(--r);position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;overflow:hidden;transition:var(--tr)}
+.pc:active{transform:scale(.98)}
+.pc.w{background:linear-gradient(180deg,#EBF5FF,#DBEAFE);border:2px dashed #93C5FD}
+.pc.c{background:linear-gradient(180deg,#ECFDF5,#D1FAE5);border:2px dashed var(--pl)}
+.pc .ic{font-size:1.8rem;opacity:.6}
+.pc.w .ic{color:#3B82F6}.pc.c .ic{color:var(--pl)}
+.pc .lb{font-size:.75rem;font-weight:700;text-align:center;line-height:1.3}
+.pc.w .lb{color:#3B82F6}.pc.c .lb{color:var(--p)}
+.pc .hn{font-size:.65rem;color:var(--th)}
+.pp{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:10;background:#fff;border-radius:var(--r)}
+.rb{position:absolute;bottom:7px;right:7px;background:rgba(0,0,0,.6);color:#fff;font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:16px;z-index:15;display:none;backdrop-filter:blur(4px)}
+
+/* AI Badge */
+.ai-b{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;padding:2px 9px;border-radius:5px;font-size:.68rem;font-weight:700}
+.af{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px}
+.af-l{font-size:.66rem;font-weight:700;color:var(--th);margin-bottom:3px}
+
+/* Agreement */
+.ag{background:var(--wrb);border:1px solid #FEEBC8;border-radius:10px;padding:10px 12px;margin-top:10px}
+.ag-t{font-size:.75rem;font-weight:800;color:#C05621;margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.ag-tx{font-size:.66rem;color:var(--ts);line-height:1.5;margin-bottom:7px}
+.ck{display:flex;align-items:center;gap:9px;cursor:pointer}
+.ck input{width:18px;height:18px;accent-color:var(--p);cursor:pointer;flex-shrink:0}
+.ck label{font-size:.8rem;font-weight:700;cursor:pointer}
+
+/* Save Button */
+.btn-sv{width:100%;padding:11px;margin-top:10px;border:none;border-radius:var(--r);font-size:.88rem;font-weight:800;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit}
+.btn-sv.ok{background:var(--p);color:#fff;box-shadow:0 4px 14px rgba(10,107,92,.3)}
+.btn-sv.ok:active{transform:translateY(2px);box-shadow:none}
+.btn-sv.off{background:var(--bd);color:var(--th);cursor:not-allowed}
+
+/* List */
+.ls{padding:0 6px;margin-top:8px}
+.lh{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:14px;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.05);border:1px solid var(--bl);margin-bottom:10px}
+.lh-l{display:flex;align-items:center;gap:9px}
+.lc{background:var(--p);color:#fff;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:900;font-family:'Outfit'}
+.lh-t{font-size:.9rem;font-weight:800}
+.lh-s{font-size:.75rem;color:var(--p);font-weight:600}
+
+.dc{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);border:1px solid var(--bl);margin-bottom:10px;animation:fi .3s ease-out}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.dc-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--bl)}
+.dc-tag{display:flex;align-items:center;gap:7px}
+.dc-rm{font-size:.82rem;font-weight:800}
+.dc-tp{font-size:.7rem;font-weight:700;color:var(--dn);background:var(--dnb);padding:2px 7px;border-radius:4px}
+.dc-tp.safe{color:#059669;background:#ECFDF5}
+.dc-act{display:flex;gap:5px}
+.bi{width:30px;height:30px;border-radius:7px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.78rem;transition:var(--tr)}
+.bi.ed{background:#FEF3C7;color:#D97706}
+.bi.dl{background:#FEE2E2;color:#EF4444}
+.bi:active{transform:scale(.9)}
+.dc-ph{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:var(--bl);padding:3px}
+.dc-ph img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#f9f9f9;border-radius:6px}
+.dc-ph.single{grid-template-columns:1fr}
+.dc-ph.single img{aspect-ratio:16/9;max-height:140px}
+.dc-bd{padding:12px 14px}
+.dc-wk{font-size:.75rem;font-weight:700;color:var(--p);margin-bottom:4px}
+.dc-dt{font-size:.82rem;color:var(--ts);line-height:1.6;white-space:pre-wrap}
+
+/* Bottom Actions */
+.ba{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:0 6px;margin-top:12px}
+.ab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 6px;border:none;border-radius:var(--r);cursor:pointer;font-family:inherit;transition:var(--tr);text-decoration:none}
+.ab:active{transform:scale(.96)}
+.ab-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff}
+.ab-tx{font-size:.75rem;font-weight:700}
+.ab.pdf{background:#ECFDF5}.ab.pdf .ab-ic{background:linear-gradient(135deg,#059669,#10B981)}.ab.pdf .ab-tx{color:#059669}
+.ab.rv{background:var(--pub)}.ab.rv .ab-ic{background:linear-gradient(135deg,#7C3AED,#A78BFA)}.ab.rv .ab-tx{color:var(--pu)}
+.ab.cs{background:#FFF7ED}.ab.cs .ab-ic{background:linear-gradient(135deg,var(--ac),#FF8F5E)}.ab.cs .ab-tx{color:var(--ac)}
+
+/* Footer */
+.ft{text-align:center;padding:18px 10px;margin-top:24px;border-top:1px solid var(--bl)}
+.ft-b{font-size:.8rem;font-weight:800;margin-bottom:3px}
+.ft-i{font-size:.68rem;color:var(--th);line-height:1.5}
+
+/* Modal */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:20px}
+.mo.show{display:flex}
+.mo-b{background:#fff;width:100%;max-width:390px;border-radius:22px;padding:24px 20px;box-shadow:0 8px 40px rgba(0,0,0,.1);animation:mp .3s cubic-bezier(.34,1.56,.64,1);max-height:85vh;overflow-y:auto}
+@keyframes mp{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.mo-h{font-size:1.15rem;font-weight:900;text-align:center;margin-bottom:16px}
+.mo-cls{display:block;text-align:center;margin-top:12px;background:none;border:none;color:var(--th);font-size:.82rem;cursor:pointer;text-decoration:underline;font-family:inherit}
+.pr{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:6px}
+.pr-l{font-size:.85rem;font-weight:700;color:var(--ts)}
+.pr-v{font-size:.9rem;font-weight:900;color:var(--pu)}
+.nt{background:var(--wrb);border:1px solid #FEEBC8;border-radius:10px;padding:12px;font-size:.78rem;color:var(--ts);line-height:1.6;margin-bottom:14px}
+.nt b{color:#C05621}
+.btn-f{width:100%;padding:13px;border:none;border-radius:var(--r);background:linear-gradient(135deg,var(--pu),#A78BFA);color:#fff;font-size:.9rem;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 4px 14px rgba(124,58,237,.3)}
+
+/* Chat */
+.cf{position:fixed;bottom:18px;right:18px;width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;z-index:998;box-shadow:0 4px 18px rgba(10,107,92,.35);border:none}
+.cw{position:fixed;bottom:80px;right:14px;width:300px;height:420px;background:#fff;border-radius:22px;box-shadow:0 8px 40px rgba(0,0,0,.1);z-index:999;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--bd);animation:su .3s ease-out}
+.cw.show{display:flex}
+@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.cw-h{background:var(--p);color:#fff;padding:14px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.85rem}
+.cw-hc{cursor:pointer;font-size:1rem;opacity:.8;background:none;border:none;color:#fff}
+.cw-bd{flex:1;padding:14px;overflow-y:auto;background:var(--bg);display:flex;flex-direction:column;gap:8px}
+.bb{max-width:82%;padding:9px 12px;border-radius:12px;font-size:.82rem;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.bb.bt{background:#fff;align-self:flex-start;border-top-left-radius:3px;border:1px solid var(--bl)}
+.bb.us{background:var(--p);color:#fff;align-self:flex-end;border-top-right-radius:3px}
+.cw-q{padding:10px;background:#fff;border-top:1px solid var(--bl);display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.qb{background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:7px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;font-family:inherit}
+.qb:active{background:var(--p);color:#fff;border-color:var(--p)}
+
+/* Storage indicator */
+.sg{display:flex;align-items:center;gap:5px;font-size:.68rem;color:var(--th);padding:2px 8px}
+.sg i{color:var(--pl)}
+
+/* Print */
+@media print{
+  .app{max-width:100%;box-shadow:none;padding-bottom:0}
+  .hd,.st,.steps,.sec,.ba,.ft,.cf,.cw,.dc-act,.mode-bar,.mode-bar-out,.sg{display:none!important}
+  .ls{padding:0;margin:0}
+  .lh{border:none;box-shadow:none;margin-bottom:20px;border-bottom:2px solid #333;border-radius:0}
+  .dc{break-inside:avoid;box-shadow:none;border:1px solid #ccc;margin-bottom:16px}
+  #ptitle{display:block!important;text-align:center;font-size:22px;font-weight:900;margin:20px 0}
+  #pdiscl{display:block!important;text-align:center;font-size:10px;color:#888;margin-top:20px;padding-top:10px;border-top:1px solid #ddd}
+}
+.hidden{display:none!important}
+input[type="file"]{display:none}
+</style>
 </head>
 <body>
+<div class="app">
+<div id="ptitle" style="display:none"></div>
 
-<div class="card">
-    <h2>🐸 Gemini 3.0 연결 테스트</h2>
-    <p style="font-size: 0.9em; color: #5f6368;">유튜브에서 보신 최신 모델 정보를 반영한 복구 코드입니다.</p>
-    
-    <label>API Key</label>
-    <input type="password" id="apiKey" placeholder="AI Studio에서 발급받은 키를 입력하세요">
-    
-    <label>최신 모델 선택 (Gemini 3.0)</label>
-    <select id="modelName">
-        <option value="gemini-3-flash-preview">Gemini 3 Flash (추천: 빠름/안정적)</option>
-        <option value="gemini-3-pro-preview">Gemini 3 Pro (고성능 추론)</option>
-        <option value="gemini-1.5-flash">Gemini 1.5 Flash (이전 세대 호환)</option>
-    </select>
+<!-- HEADER -->
+<header class="hd">
+  <div class="hd-top">
+    <div class="hd-in">
+      <div class="hd-logo"><img src="data:image/webp;base64,UklGRuoEAABXRUJQVlA4IN4EAAAQGACdASpcAFwAPp1GnUqlo6KhqBOcILATiWIAziUPZLoxe2U55n0O7wxvOX+UsDSkXxLWXn6nhNlInK/61xAaRTF56H+dT6t9hDpAMiUzKdmNt0OT+k+e4kIkk9UU4g3Ue6gXXsy4TUQPzqrWFheKPh/d466jvGXPk+Ztl5ezpdETvsJb0A0snIIEbrfGxboXEL0gZeragUw1nHBvY2mpikGFSA9Xe/ToXwSRJlydenBTiN9DMTHbuFrg8Gj+LHtPeHvl5ApU0AAA/vyoBbU35bQ5MnEeith5r842pJDgxLANyxkg3F0xnZf+xTvhRgOtBrHLEgG7Invfea7NizqMAWt0xvFzVtW7aRF9rj8Yksvu8+ox//wbed9EwT1b3HBcb++gbLVKgi8XP9uSn2cTCAVCVHsws2jo85P8r9hc4lKCTP5GLpUYiAGv3RG0s8M/iivVyM2I7IwKYfg8sQqPL747nz3Gl90uhFRJZMaPbsLkJd+qj7sc1/lWvyndtvToQz3+xwjw6WK5wPb32Uzq+c2v8Ete6s03zw9Xe9h9xamToaSx6dbL49Q5m0p1BWNSGQI1C+Fy+xfCzyROaGF9LvYdn9QGnmwWp5UJ/ACqhfosnIfweGYfq7csTuKFke3W5W6yvx4mlTsdwKvImknOZfJsf7zf0xFjwWfDCfXEP9F3P45AnBllQX+i1u2wyHL5vl1smRQQdkaWAekiPpx83EY8nQe/XmUJZJ9gRn6iM8OJXKiPoqnuNLOtldy1e0Sbznq3a0NTl6cw3XjzhhJMqyolFWZNEEJY2PGAOlpK1Wc+E051ISM97DAWktQP0XWX8vTGil5Iw+MHPESQPlPIa+TFhF/pFXilB3echpOAKpKdi9Jk+rzNuJ0YuwMUSk962g3r+xTOcZWrxSvjpFDAM/7IS8RkBonL/ZJULD/R1QC7khz4bX3h/ye+jy7vANsCeCFgK+iTza+w4nnHFkq7zx/6KynjF6/Y1HphryikePZlySa0B8cWZ+iF2Q1cncseX35Kf9sjX3D3Q88jaJ2kdqy1sY5KinmpOWMop44jLAWnP4L4eq63z50l6YYBhVGba4hDJ4MDp5dWtTGFqhlhmJy3AeUsyGf1wYrlr8ywj9mSxyRXBj58E5pKTUmhRTkhAXuFV9KzNv0JE5zsNAJcHSUuwK2+rXSCnb2yV/g1KnO1ekq96sB8Q7kFxSFV+dgJ82/4BExvK4BzXQ2bjrBSL2LR+6MhKcp8Dw5W7p5OtZgkaPOOQsC9MNkRDT+nOSijuWYMavNZ4lpNXJJbgTVJrG0NkZCE1Jsu3+t82GENYCES8LFoJJYxLF4C1B/4Nx9BoqmCkTZIYzdcFdDRhOK835Nr34brBvWcF+B68aGiWpgHssLYFP2D/Fi5VWf6gtvGifz2w6vgHVZvbcqvsgnRTwe1A908A7SzO+69hyoOoNZyrqf0SxjKNXEF7OvUmlrsHuHvmh4fdiLJlVjMtr02n52hgCkfrNkwxIRWU7gLvHrppQlz4ckL7wwvI5ZypkMBI6goeerC1Yzkeuanea2ks36mHOsLEBJ7OiKKSGR4EqryBw5yX0u/mYjW8/aH7dabhMmIfc6//CA5OGZjiy5F5GZTX1cGF6PpT73VJeobzvPtfV7TS5sgAAAAAAAA" alt="logo"></div>
+      <div><div class="hd-title">청개구리 사전점검 AI</div></div>
+    </div>
+    <div class="hd-tags">
+      <span class="tag" style="background:#3B82F6;color:#fff">spare</span>
+      <span class="tag tag-free">무료</span>
+      <span class="tag tag-v" id="verTag" onclick="A.devTap()">v18.3S</span>
+    </div>
+  </div>
+</header>
 
-    <button onclick="runTest()">⚡ 즉시 진단 및 연결 시도</button>
-
-    <div id="log">진단 대기 중...</div>
+<!-- MODE BAR (below header) -->
+<div class="mode-bar-out">
+  <label class="mode-ck active" id="mcFree">
+    <input type="checkbox" id="ckFree" checked onchange="A.setMode('free')">
+    <span class="mc-ic"><i class="fa-solid fa-user"></i></span>
+    <span class="mc-lb">일반 점검</span>
+  </label>
+  <label class="mode-ck" id="mcPro">
+    <input type="checkbox" id="ckPro" onchange="A.setMode('pro')">
+    <span class="mc-ic"><i class="fa-solid fa-user-tie"></i></span>
+    <span class="mc-lb">전문가 점검</span>
+  </label>
 </div>
 
-<script>
-    async function runTest() {
-        const apiKey = document.getElementById('apiKey').value;
-        const model = document.getElementById('modelName').value;
-        const logBox = document.getElementById('log');
+<!-- PASSWORD MODAL -->
+<div class="mo" id="moPwd">
+<div class="mo-b" style="max-width:320px;text-align:center">
+  <div style="font-size:2.5rem;margin-bottom:10px">🔒</div>
+  <div class="mo-h" style="font-size:1rem;color:var(--p)">전문가 점검 모드</div>
+  <p style="font-size:.78rem;color:var(--ts);margin-bottom:14px">직원 전용 기능입니다.<br>비밀번호를 입력해주세요.</p>
+  <input type="password" class="if" id="pwdInput" placeholder="비밀번호 입력" style="text-align:center;font-size:1rem;letter-spacing:4px;font-weight:800;margin-bottom:10px" onkeydown="if(event.key==='Enter')A.checkPwd()">
+  <div id="pwdErr" style="font-size:.72rem;color:var(--dn);margin-bottom:8px;display:none">비밀번호가 틀렸습니다.</div>
+  <button class="btn-sv ok" style="margin-top:4px" onclick="A.checkPwd()"><i class="fa-solid fa-lock-open"></i> 확인</button>
+  <button class="mo-cls" onclick="A.cancelPwd()">취소</button>
+</div>
+</div>
 
-        if (!apiKey) { alert("API 키를 넣어주세요!"); return; }
+<!-- STATUS -->
+<div class="st">
+  <div class="st-chip"><div class="st-dot" id="sDot"></div><span id="sMsg">AI 대기 중</span></div>
+  <button class="st-help" onclick="A.modal('help',1)"><i class="fa-solid fa-circle-question"></i> 도움말</button>
+</div>
 
-        logBox.innerHTML = `🚀 [진단 시작] Gemini 3.0 환경 분석 중...\n`;
-        logBox.innerHTML += `📡 모델: ${model}\n`;
+<!-- STORAGE -->
+<div class="sg"><i class="fa-solid fa-database"></i> <span id="sgTx">저장된 항목: 0건</span></div>
 
-        // API 버전 설정: Gemini 3는 현재 v1beta에서 가장 잘 작동합니다.
-        const apiVersion = "v1beta";
-        const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${apiKey}`;
+<!-- STEPS -->
+<div class="steps">
+  <div class="sn on" id="s1">1</div><div class="sl" id="l1"></div>
+  <div class="sn" id="s2">2</div><div class="sl" id="l2"></div>
+  <div class="sn" id="s3">3</div><div class="sl" id="l3"></div>
+  <div class="sn" id="s4">4</div>
+</div>
 
-        try {
-            const startTime = Date.now();
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Gemini 3.0 연결 성공했니? 짧게 대답해줘." }] }]
-                })
-            });
+<!-- SEC1: 현장 정보 -->
+<div class="sec">
+  <div class="sec-t"><span class="n">1</span> 현장 정보</div>
+  <div class="ig">
+    <div class="il"><i class="fa-solid fa-map-pin"></i> 전체 주소</div>
+    <input type="text" class="if" id="fAddr" placeholder="서울 송파구 올림픽로 300">
+  </div>
+  <div class="row" style="margin-top:8px">
+    <div class="ig"><div class="il">아파트명</div><input type="text" class="if" id="fApt" placeholder="아파트명"></div>
+    <div class="ig" style="flex:.45"><div class="il">동</div><input type="tel" class="if" id="fDong" placeholder="000" style="text-align:center;font-weight:800"></div>
+    <div class="ig" style="flex:.45"><div class="il">호</div><input type="tel" class="if" id="fHo" placeholder="0000" style="text-align:center;font-weight:800"></div>
+  </div>
+  <div class="ig" style="margin-top:8px">
+    <div class="il"><i class="fa-solid fa-location-dot"></i> 점검 위치</div>
+    <select class="if" id="fRoom">
+      <option value="">위치 선택</option>
+      <option>거실</option><option>주방</option><option>침실1</option><option>침실2</option><option>침실3</option>
+      <option>안방</option><option>욕실1</option><option>욕실2</option><option>현관</option><option>발코니1</option><option>발코니2</option><option>대피공간</option><option>팬트리</option><option>다용도실</option><option>기타</option>
+    </select>
+  </div>
+</div>
 
-            const data = await response.json();
+<!-- SEC2: 사진 -->
+<div class="sec">
+  <div class="sec-t"><span class="n">2</span> 사진 촬영</div>
+  <div class="pg">
+    <input type="file" id="inW" accept="image/*">
+    <label class="pc w" for="inW">
+      <i class="fa-solid fa-image ic"></i>
+      <div class="lb">멀리서 찍기<br><span class="hn">위치 파악용</span></div>
+      <img class="pp" id="pvW"><div class="rb" id="rtW">다시찍기</div>
+    </label>
+    <input type="file" id="inC" accept="image/*">
+    <label class="pc c" for="inC">
+      <i class="fa-solid fa-crosshairs ic"></i>
+      <div class="lb">가까이 찍기<br><span class="hn">AI 분석 시작</span></div>
+      <img class="pp" id="pvC"><div class="rb" id="rtC">다시찍기</div>
+    </label>
+  </div>
+</div>
 
-            if (!response.ok) {
-                const errMsg = data.error?.message || "알 수 없는 에러";
-                logBox.innerHTML += `\n<span class="err-text">❌ 연결 실패 (HTTP ${response.status})</span>\n`;
-                logBox.innerHTML += `⚠️ 원인: ${errMsg}\n`;
-                
-                if(errMsg.includes("not found")) {
-                    logBox.innerHTML += `💡 조치: 모델명이 아직 해당 계정에 활성화되지 않았을 수 있습니다. 다른 모델을 선택해 보세요.`;
-                }
-                return;
-            }
+<!-- SEC3: 하자 -->
+<div class="sec">
+  <div class="sec-t"><span class="n">3</span> 하자 정보</div>
+  <div class="ig">
+    <div class="il"><i class="fa-solid fa-pen"></i> 하자 내용 (직접 입력)</div>
+    <div style="position:relative">
+      <input type="text" class="if" id="fUser" placeholder="예) 창호 우측 내부창짝 수직수평불량" style="padding-right:36px">
+      <i class="fa-solid fa-wand-magic-sparkles" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--pl);font-size:.95rem"></i>
+    </div>
+  </div>
+  <div class="af">
+    <div class="ig"><div class="af-l">공종</div>
+      <select class="if" id="fWork" style="font-size:.8rem;padding:9px">
+        <option value="">자동</option>
+        <option>타일공사</option><option>도배공사</option><option>마루공사</option><option>창호공사</option><option>가구공사</option><option>기타공사</option>
+      </select>
+    </div>
+    <div class="ig"><div class="af-l">세부</div>
+      <select class="if" id="fSub" style="font-size:.8rem;padding:9px"><option value="">자동</option></select>
+    </div>
+    <div class="ig"><div class="af-l">유형</div>
+      <input type="text" class="if" id="fType" placeholder="자동" style="font-size:.8rem;padding:9px">
+    </div>
+  </div>
+  <div class="ig">
+    <div class="il">
+      <span class="ai-b"><i class="fa-solid fa-robot"></i> AI 분석</span>
+      <span style="font-size:.68rem;color:var(--th);margin-left:4px">국토부 기준 참조</span>
+    </div>
+    <textarea class="if" id="fDetail" placeholder="사진 촬영 시 AI가 자동 분석합니다."></textarea>
+  </div>
+  <div class="ag">
+    <div class="ag-t"><i class="fa-solid fa-shield-halved"></i> 필수 확인</div>
+    <div class="ag-tx">1. <b>법적 효력 없음:</b> AI 추정치이며 전문가 실사 필요<br>2. <b>책임 제한:</b> 분석 오류에 대해 개발사 법적 책임 없음</div>
+    <div class="ck"><input type="checkbox" id="fAgree" onchange="A.togSave()"><label for="fAgree">위 내용을 확인하였으며 동의합니다</label></div>
+    <div id="agreeNote" style="font-size:.62rem;color:#059669;margin-top:4px;display:none"><i class="fa-solid fa-circle-check"></i> 동의가 저장되었습니다 (최초 1회)</div>
+  </div>
+  <button class="btn-sv off" id="btnSv" onclick="A.save()" disabled><i class="fa-solid fa-check-circle"></i> 리스트에 저장</button>
+</div>
 
-            // Gemini 3.0 응답 구조 파싱
-            const answer = data.candidates[0].content.parts[0].text;
-            const endTime = Date.now();
-            
-            logBox.innerHTML += `<span class="ok-text">✅ 연결 성공! (${endTime - startTime}ms)</span>\n\n`;
-            logBox.innerHTML += `🤖 <b>Gemini 응답:</b>\n"${answer}"\n\n`;
-            logBox.innerHTML += `<span class="ok-text">🎉 축하합니다! 이제 기존 앱의 모델명을 '${model}'로 수정하시면 됩니다.</span>`;
+<!-- SEC4: 리스트 -->
+<div class="ls">
+  <div class="lh">
+    <div class="lh-l">
+      <div class="lc" id="lCnt">0</div>
+      <div><div class="lh-t">점검 리스트</div><div class="lh-s" id="lInfo">정보 입력 대기</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span id="lMode" style="font-size:.68rem;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--pg);color:var(--p);display:none">일반점검</span>
+      <button style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:.7rem;font-weight:700;cursor:pointer;color:var(--ts);font-family:inherit" onclick="A.clearAll()"><i class="fa-solid fa-trash"></i> 전체삭제</button>
+    </div>
+  </div>
+  <div id="lBox"></div>
+</div>
 
-        } catch (error) {
-            logBox.innerHTML += `\n<span class="err-text">❌ 네트워크 오류: ${error.message}</span>`;
-        }
-    }
+<!-- BOTTOM -->
+<div class="ba">
+  <button class="ab pdf" onclick="A.pdf()"><div class="ab-ic"><i class="fa-solid fa-file-pdf"></i></div><span class="ab-tx">전체 저장</span></button>
+  <button class="ab rv" onclick="A.modal('paid',1)"><div class="ab-ic"><i class="fa-solid fa-calendar-check"></i></div><span class="ab-tx">유료 예약</span></button>
+  <button class="ab cs" onclick="A.chat()"><div class="ab-ic"><i class="fa-solid fa-comments"></i></div><span class="ab-tx">AI 상담</span></button>
+</div>
+
+<div id="pdiscl" style="display:none">※ 본 리포트는 입주자 사전점검 보조 자료이며 법적 효력이 없습니다. (제공: 청개구리샤시)</div>
+
+<div class="ft">
+  <div class="ft-b">청개구리샤시</div>
+  <div class="ft-i">대표: 전영웅 | 사업자: 123-36-31426 | 📞 010-2322-0949<br>본 서비스는 참고용 보조 도구이며 법적 책임을 지지 않습니다.<br>ⓒ 2026 Cheong-gaeguri Corp.</div>
+</div>
+</div>
+
+<!-- MODAL: PAID -->
+<div class="mo" id="moPaid">
+<div class="mo-b">
+  <div class="mo-h" style="color:var(--pu)">🐸 유료 사전점검 안내</div>
+  <p style="font-size:.82rem;color:var(--ts);margin-bottom:14px;line-height:1.6">청개구리는 불필요한 점검을 생략하고 <b>중대하자를 중점</b>으로 검사합니다.</p>
+  <div class="pr"><span class="pr-l">29평 이하</span><span class="pr-v">130,000원</span></div>
+  <div class="pr"><span class="pr-l">30평 이상</span><span class="pr-v">150,000원</span></div>
+  <div class="pr" style="margin-bottom:14px"><span class="pr-l">50평 이상</span><span class="pr-v">200,000원</span></div>
+  <div class="nt"><b>📋 예약 및 환불 규정</b><br>1. 선입금 후 <b>직통(010-2322-0949)</b>으로 입금자·주소·방문일/시간 문자 → 확정 통보<br>2. 방문 <b>7일 전 취소 시 100% 환불</b><br>3. 그 외 기간 환불 불가<br>4. 예약서 작성 시 위 내용 동의 간주</div>
+  <button class="btn-f" onclick="window.open('https://forms.gle/iF9t9gXCHkuMQj8W6','_blank')"><i class="fa-solid fa-pen-to-square"></i> 예약 신청서 작성</button>
+  <button class="mo-cls" onclick="A.modal('paid',0)">닫기</button>
+</div>
+</div>
+
+<!-- MODAL: HELP -->
+<div class="mo" id="moHelp">
+<div class="mo-b">
+  <div class="mo-h">🐸 앱 사용법</div>
+  <div style="font-size:.85rem;color:var(--ts);line-height:1.8;text-align:left">
+    <b>① 현장 정보</b> — 주소, 아파트명, 동/호, 위치 입력<br>
+    <b>② 사진 촬영</b> — 멀리서 1장 + 가까이 1장<br>
+    <b>③ 하자 입력</b> — 직접 입력하면 AI가 더 정확 분석<br>
+    <b>④ AI 자동 분석</b> — 공종, 세부, 유형, 리포트 생성<br>
+    <b>⑤ 동의 체크 → 리스트 저장</b> 반복<br>
+    <b>⑥ 전체 저장</b> → 폰 내파일 PDF 저장<br>
+    <b>⑦ 전문가 점검</b> → 유료 신청<br><br>
+    💡 <b>일반 점검</b>: 무료 AI 분석으로 하자 여부 판별<br>
+    💡 <b>전문가 점검</b>: 전문가 상세 분석 모드
+  </div>
+  <div class="ck" style="margin-top:14px;padding:10px;background:var(--bg);border-radius:10px">
+    <input type="checkbox" id="hpCk" onchange="if(this.checked)A.modal('help',0)">
+    <label for="hpCk">모두 확인 후 체크</label>
+  </div>
+</div>
+</div>
+
+<!-- CHAT -->
+<button class="cf" onclick="A.chat()"><i class="fa-solid fa-comment-dots"></i></button>
+<div class="cw" id="chatW">
+  <div class="cw-h"><span>🐸 청개구리 상담</span><button class="cw-hc" onclick="A.chat()"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="cw-bd" id="chatB"><div class="bb bt">안녕하세요! 청개구리 샤시입니다. 무엇을 도와드릴까요?</div></div>
+  <div class="cw-q" style="grid-template-columns:1fr 1fr;gap:4px">
+    <button class="qb" onclick="A.ask('cost')">💰 비용 안내</button>
+    <button class="qb" onclick="A.ask('value')">💡 합리적 가격 비결</button>
+    <button class="qb" onclick="A.ask('defect')">🛠️ 중대하자란?</button>
+    <button class="qb" onclick="A.ask('booking')">📅 예약 방법</button>
+    <button class="qb" onclick="A.ask('time')">⏱️ 소요시간</button>
+    <button class="qb" onclick="A.ask('after')">📋 점검 후 절차</button>
+    <button class="qb" onclick="A.ask('diff')">🔍 AI vs 유료 차이</button>
+    <button class="qb" onclick="A.ask('cancel')">💳 취소/환불</button>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"@google/generative-ai":"https://esm.run/@google/generative-ai"}}</script>
+<script type="module">
+import{GoogleGenerativeAI}from"@google/generative-ai";
+
+const K=["AIzaSyDNo_QhI","qoOyuyXywUYye","tipbf4RstINn8"].join('');
+const LIMIT=100;
+let list=[], wF=null, cF=null, devN=0, devT, mode='free';
+
+const $=id=>document.getElementById(id);
+
+// Init
+window.addEventListener('DOMContentLoaded',()=>{
+  if(ls('is_dev')==='true')$('verTag').classList.add('dev');
+  // Restore agreement checkbox if previously agreed
+  if(ls('frog_agreed')==='true'){
+    $('fAgree').checked=true;
+    $('agreeNote').style.display='block';
+    A.togSave();
+  }
+  loadList();
+  step(1);
+});
+
+function ls(k,v){if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}
+
+// Steps
+function step(c){
+  for(let i=1;i<=4;i++){
+    const n=$(`s${i}`),l=$(`l${i}`);
+    n.classList.remove('on','ok');
+    if(l)l.classList.remove('ok');
+    if(i<c){n.classList.add('ok');n.innerHTML='<i class="fa-solid fa-check" style="font-size:.65rem"></i>';if(l)l.classList.add('ok')}
+    else if(i===c){n.classList.add('on');n.textContent=i}
+    else n.textContent=i;
+  }
+}
+
+function stat(m,e){$('sMsg').textContent=m;$('sDot').classList.toggle('err',!!e)}
+
+// Mode
+window.A={};
+A.setMode=m=>{
+  if(m==='pro'){
+    $('ckPro').checked=false;
+    $('moPwd').classList.add('show');
+    $('pwdInput').value='';
+    $('pwdErr').style.display='none';
+    setTimeout(()=>$('pwdInput').focus(),200);
+    return;
+  }
+  // Free mode
+  mode='free';
+  $('ckFree').checked=true;
+  $('ckPro').checked=false;
+  $('mcFree').classList.add('active');
+  $('mcPro').classList.remove('active-pro');
+};
+A.checkPwd=()=>{
+  const pw=$('pwdInput').value;
+  if(pw==='51600'){
+    mode='pro';
+    $('ckFree').checked=false;
+    $('ckPro').checked=true;
+    $('mcFree').classList.remove('active');
+    $('mcPro').classList.add('active-pro');
+    $('moPwd').classList.remove('show');
+    stat('전문가 점검 모드 활성화');
+  }else{
+    $('pwdErr').style.display='block';
+    $('pwdInput').value='';
+    $('pwdInput').focus();
+  }
+};
+A.cancelPwd=()=>{
+  $('ckPro').checked=false;
+  $('moPwd').classList.remove('show');
+};
+
+// Dev
+A.devTap=()=>{
+  clearTimeout(devT);devN++;
+  if(devN===5){
+    const d=ls('is_dev')==='true';
+    ls('is_dev',!d);
+    $('verTag').classList.toggle('dev',!d);
+    alert(d?'개발자 모드 해제':'🐸 개발자 모드 활성화!');
+    devN=0;
+  }
+  devT=setTimeout(()=>devN=0,1000);
+};
+
+// Limit check
+function chkLim(){
+  if(ls('is_dev')==='true')return true;
+  const today=new Date().toDateString();
+  let d=JSON.parse(ls('frog_use')||'{}');
+  if(d.date!==today)d={date:today,count:0};
+  if(d.count>=LIMIT){alert(`⚠️ 일일 무료 한도(${LIMIT}회) 초과`);return false}
+  d.count++;ls('frog_use',JSON.stringify(d));return true;
+}
+
+// Photo
+$('inW').addEventListener('change',e=>photo(e,'w'));
+$('inC').addEventListener('change',e=>photo(e,'c'));
+
+function photo(e,t){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    if(t==='w'){wF=f;show('pvW',ev.target.result);$('rtW').style.display='block';stat('가까이 찍기를 촬영하세요');step(2)}
+    else{if(!chkLim()){$('inC').value='';return}cF=f;show('pvC',ev.target.result);$('rtC').style.display='block';step(3);runAI()}
+  };r.readAsDataURL(f);
+}
+function show(id,src){const p=$(id);p.src=src;p.style.display='block'}
+
+async function toPart(f){return new Promise(r=>{const x=new FileReader();x.onloadend=()=>r({inlineData:{data:x.result.split(',')[1],mimeType:f.type}});x.readAsDataURL(f)})}
+
+// AI
+async function runAI(){
+  const det=$('fDetail'), ui=$('fUser').value;
+  det.value='🔍 AI 정밀 분석 중...';
+  stat('AI 분석 중...');
+  try{
+    const g=new GoogleGenerativeAI(K);
+    const m=g.getGenerativeModel({model:"gemini-2.5-flash"});
+    const proExtra=mode==='pro'?`\n[전문 모드] 시공 기준서, KS규격, 국토부 하자판정 기준을 상세히 인용하여 전문 보고서 수준으로 작성하세요.`:'';
+    const prompt=`입주자 사전점검 AI입니다.
+사진1(Wide):공종 파악. 사진2(Close):하자유형 및 상세내용 파악.
+
+**[사용자 입력]: "${ui}"**
+(이 정보가 있으면 최우선 반영하세요.)${proExtra}
+
+[판단기준]
+- 하자 판단 시: 현상과 사례매칭을 상세 기술
+- 하자 아닌 경우: "type"에 "허용범위", "detail"에:
+  1. 현상: [상태기술]
+  2. ✅ 허용범위 안내: [국토부 기준 설명]
+  3. 💡 참고: 허용범위 내이므로 하자 접수 대상 아님
+
+[JSON출력]
+{"work":"공종명","sub":"세부공종","type":"하자유형 또는 허용범위","detail":"1. 현상:...\\n2. 사례매칭 또는 허용범위안내:..."}`;
+
+    const parts=[prompt];
+    if(wF)parts.push(await toPart(wF));
+    if(cF)parts.push(await toPart(cF));
+
+    const res=await m.generateContent(parts);
+    const txt=res.response.text();
+    let d={};
+    try{const c=txt.replace(/```json/g,'').replace(/```/g,'').trim();const mt=c.match(/\{[\s\S]*\}/);d=mt?JSON.parse(mt[0]):{}}
+    catch{d={detail:'파싱 실패. 직접 입력해주세요.',work:'기타',sub:'',type:'확인필요'}}
+
+    $('fWork').value=d.work||'';
+    $('fSub').innerHTML=`<option value="${d.sub||''}">${d.sub||'자동'}</option>`;
+    $('fType').value=d.type||'';
+    det.value=(d.detail||'')+'\n\n(※ AI 분석 결과는 참고용입니다.)';
+    stat('분석 완료! 확인 후 동의해주세요.');
+  }catch(err){
+    console.error(err);stat('분석 실패',true);det.value='일시적 오류가 발생했습니다.';
+  }
+}
+
+// Save toggle
+A.togSave=()=>{
+  const ok=$('fAgree').checked;
+  if(ok){ls('frog_agreed','true');$('agreeNote').style.display='block'}
+  $('btnSv').disabled=!ok;$('btnSv').className=ok?'btn-sv ok':'btn-sv off';
+};
+
+// Save
+A.save=()=>{
+  if(!$('fAgree').checked)return;
+  const cs=$('pvC').src;
+  if(!cF&&(!cs||!cs.startsWith('data:'))){alert('사진(가까이 찍기)이 필요합니다.');return}
+
+  const addr=$('fAddr').value, apt=$('fApt').value||'주소참조', dong=$('fDong').value, ho=$('fHo').value;
+  const info=`${addr} (${apt} ${dong}동 ${ho}호)`;
+  $('lInfo').textContent=info;$('ptitle').textContent=info+' 사전점검 리포트';
+
+  const ws=$('pvW').src;
+  const item={
+    id:Date.now(), room:$('fRoom').value||'위치미지정',
+    work:$('fWork').value, sub:$('fSub').value, type:$('fType').value,
+    detail:$('fDetail').value, mode,
+    wImg:(ws&&ws.startsWith('data:'))?ws:null, cImg:cs
+  };
+  list.push(item);
+  renderItem(item);
+  updateModeLabel();
+  saveList();
+  reset();
+  stat('저장 완료! 다음 항목을 촬영하세요.');
+  document.querySelector('.lh').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>step(1),1500);
+};
+
+function renderItem(it){
+  const isSafe=it.type==='허용범위';
+  const modeLabel=it.mode==='pro'?'<span style="font-size:.62rem;background:linear-gradient(135deg,var(--pu),#A78BFA);color:#fff;padding:2px 7px;border-radius:4px;font-weight:700">전문가점검</span>':'<span style="font-size:.62rem;background:var(--pg);color:var(--p);padding:2px 7px;border-radius:4px;font-weight:700">일반점검</span>';
+  const h=`<div class="dc" id="i-${it.id}">
+    <div class="dc-hd"><div class="dc-tag"><span class="dc-rm">${it.room}</span><span class="dc-tp${isSafe?' safe':''}">${it.type}</span>${modeLabel}</div>
+    <div class="dc-act"><button class="bi ed" onclick="A.edit(${it.id})"><i class="fa-solid fa-pen"></i></button><button class="bi dl" onclick="A.del(${it.id})"><i class="fa-solid fa-trash-can"></i></button></div></div>
+    <div class="dc-ph${!it.wImg?' single':''}">${it.wImg?`<img src="${it.wImg}" title="멀리서 찍기">`:''}<img src="${it.cImg}" title="가까이 찍기"></div>
+    <div class="dc-bd"><div class="dc-wk">${it.work} → ${it.sub}</div><div class="dc-dt">${it.detail}</div></div></div>`;
+  $('lBox').insertAdjacentHTML('beforeend',h);
+  $('lCnt').textContent=list.length;
+}
+
+function updateModeLabel(){
+  const el=$('lMode');
+  if(!list.length){el.style.display='none';return}
+  const hasPro=list.some(i=>i.mode==='pro');
+  const hasFree=list.some(i=>i.mode==='free');
+  if(hasPro&&hasFree){el.textContent='일반+전문가점검';el.style.background='linear-gradient(135deg,var(--pg),var(--pub))';el.style.color='var(--pu)'}
+  else if(hasPro){el.textContent='전문가점검';el.style.background='var(--pub)';el.style.color='var(--pu)'}
+  else{el.textContent='일반점검';el.style.background='var(--pg)';el.style.color='var(--p)'}
+  el.style.display='inline-block';
+}
+
+function reset(){
+  ['inW','inC'].forEach(i=>$(i).value='');wF=null;cF=null;
+  ['pvW','pvC'].forEach(i=>{$(i).style.display='none'});
+  ['rtW','rtC'].forEach(i=>{$(i).style.display='none'});
+  $('fUser').value='';$('fDetail').value='';
+  // Keep agreement checked if previously agreed
+  if(ls('frog_agreed')!=='true'){
+    $('fAgree').checked=false;A.togSave();
+  }
+  step(4);
+}
+
+// Storage
+function saveList(){
+  try{
+    const data=list.map(it=>({...it,wImg:null,cImg:null}));
+    ls('frog_list',JSON.stringify(data));
+    const full=JSON.stringify(list);
+    ls('frog_list_full',full);
+    $('sgTx').textContent=`저장된 항목: ${list.length}건`;
+  }catch(e){console.warn('Storage full, saving metadata only')}
+}
+function loadList(){
+  try{
+    const full=ls('frog_list_full');
+    if(full){list=JSON.parse(full);list.forEach(it=>renderItem(it));updateModeLabel();$('sgTx').textContent=`저장된 항목: ${list.length}건`}
+    else{const d=ls('frog_list');if(d){list=JSON.parse(d);list.forEach(it=>renderItem(it));updateModeLabel();$('sgTx').textContent=`저장된 항목: ${list.length}건`}}
+  }catch(e){list=[]}
+}
+
+// Edit/Delete
+A.edit=id=>{
+  const idx=list.findIndex(i=>i.id===id);if(idx===-1)return;
+  if(!confirm('수정 모드로 불러오시겠습니까?'))return;
+  const it=list[idx];
+  $('fRoom').value=it.room;$('fWork').value=it.work;$('fDetail').value=it.detail;
+  if(it.wImg)show('pvW',it.wImg);
+  if(it.cImg)show('pvC',it.cImg);
+  $(`i-${id}`).remove();list.splice(idx,1);$('lCnt').textContent=list.length;saveList();
+  window.scrollTo(0,0);
+};
+A.del=id=>{
+  if(!confirm('삭제하시겠습니까?'))return;
+  $(`i-${id}`).remove();list=list.filter(i=>i.id!==id);$('lCnt').textContent=list.length;updateModeLabel();saveList();
+};
+A.clearAll=()=>{
+  if(!list.length)return;if(!confirm(`${list.length}건 전체 삭제하시겠습니까?`))return;
+  list=[];$('lBox').innerHTML='';$('lCnt').textContent=0;updateModeLabel();saveList();
+};
+
+// PDF
+A.pdf=()=>{if(!list.length){alert('저장할 내용이 없습니다.');return}window.print()};
+
+// Modal
+A.modal=(n,s)=>{
+  const el=$(n==='paid'?'moPaid':'moHelp');
+  el.classList.toggle('show',!!s);
+  if(n==='help'&&s)$('hpCk').checked=false;
+};
+
+// Chat
+A.chat=()=>{$('chatW').classList.toggle('show')};
+const ans={
+  cost:{q:'점검 비용이 궁금해요.',a:'💰 <b>점검 비용 안내</b><br>29평 이하: 13만원<br>30평 이상: 15만원<br>50평 이상: 20만원<br><br>※ 수도권 외 추가 출장비 발생 가능'},
+  value:{q:'합리적 가격의 비결은?',a:'💡 <b>합리적 가격의 비결</b><br>1. AI 기술 도입으로 분석 시간 단축<br>2. 불필요한 검사 배제, 핵심 하자 집중<br>3. 검사 직후 1분 내 디지털 리포트 전송<br><br>기술력으로 비용은 낮추고 품질은 높인 서비스입니다.'},
+  defect:{q:'중대하자가 뭔가요?',a:'🛠️ <b>중대하자 집중 점검</b><br>제작불량, 시공불량, 결로, 외풍을 중점 검사합니다.<br><br>단순 오염·흠집보다 <b>생활에 직접적 영향</b>을 주는 중대 하자를 우선 발견합니다.'},
+  booking:{q:'예약은 어떻게 하나요?',a:'📅 <b>예약 방법</b><br>1. 하단 유료예약 버튼 클릭<br>2. 신청서 작성 및 입금<br>3. 010-2322-0949로 문자<br><br>확인 후 확정 안내드립니다!'},
+  time:{q:'점검 시간은 얼마나 걸려요?',a:'⏱️ <b>점검 소요시간</b><br>20평 기준: 약 1시간30분~2시간<br>30평 이상: 약 2시간~3시간<br><br>꼼꼼하게 진행하되 입주 일정에 맞춰 효율적으로 완료합니다.'},
+  after:{q:'점검 후 하자 발견하면?',a:'📋 <b>점검 후 절차</b><br>1. 현장에서 고객에게 PDF파일 전송<br>2. 고객의 폰에서 저장된 파일 하자관리<br>3. 보수 완료 후 재점검 가능 (별도 비용)<br><br>리포트가 공식 보수 요청 근거 자료로 활용됩니다.'},
+  diff:{q:'AI 점검 vs 유료 점검 차이?',a:'🔍 <b>서비스 비교</b><br><b>무료 AI 점검:</b> 사진 기반 AI 분석, 간편 하자 판별<br><b>유료 전문가 점검:</b> 현장 방문 + 전문 장비 측정 + 법적 기준 리포트<br><br>AI로 먼저 확인 → 필요 시 전문가 점검 추천!'},
+  cancel:{q:'예약 취소/환불 규정은?',a:'💳 <b>취소 및 환불 안내</b><br>방문 <b>7일 전</b> 취소: 100% 환불<br>7일 이내 취소: 환불 불가<br><br>일정 변경은 사전 협의 시 가능합니다.<br>📞 010-2322-0949'}
+};
+A.ask=t=>{
+  const b=$('chatB'),{q,a}=ans[t];
+  b.innerHTML+=`<div class="bb us">${q}</div>`;
+  setTimeout(()=>{b.innerHTML+=`<div class="bb bt">${a}</div>`;b.scrollTop=b.scrollHeight},300);
+};
 </script>
-
 </body>
 </html>
