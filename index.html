@@ -2117,12 +2117,30 @@ input[type="file"]{
 /* ============================================================
    ★ 설정값
    ============================================================ */
-const APP_VER = 'v20.9-spare';
+const APP_VER = 'v21.0-spare';
 /* ★ SPARE용 GAS — 기존 앱과 동일한 GAS를 사용 (별도 GAS 배포 시 여기만 변경) */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwaGre5b025jL1of_znmu_EVg-CyqnrsAPXlc_nQkmuGHq-LZKhwJb9sDyQTdcUW4i9Pg/exec';
 const LIMIT_FREE = 3;
 const LIMIT_PAID = 100;
 /* 관리자 모드는 서버 인증 기반, 제한 없음 (99999) */
+
+/* ── failover 토큰 수신 → 무료 이용 활성화 ── */
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const token=params.get('failover');
+  if(!token)return;
+  try{
+    const data=JSON.parse(atob(token));
+    if(data.paid&&data.date===new Date().toDateString()){
+      /* 유료 이용권 보유 고객 → spare에서 무료 100회 활성화 */
+      const today=new Date().toDateString();
+      localStorage.setItem('frog_pass',JSON.stringify({date:today,active:true,type:'paid',code:'FAILOVER',activatedAt:new Date().toISOString()}));
+      setTimeout(()=>alert('💚 장애 대체 앱입니다.\n이용권이 확인되어 무료 100회가 활성화되었습니다.'),500);
+    }
+  }catch(e){console.warn('failover 토큰 파싱 실패');}
+  /* URL에서 파라미터 제거 (깔끔하게) */
+  window.history.replaceState({},'',window.location.pathname);
+})();
 
 let list=[], wF=null, cF=null, devN=0, devT;
 let mode='free';
