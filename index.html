@@ -66,7 +66,8 @@
    - [UI] 하단 버튼 영역 정리, 푸터 간소화
    ============================================================ */
 :root{
-  --p:#0A6B5C;--pl:#12B89A;--pg:rgba(18,184,154,.12);
+  /* v31.6-spare: 브랜드 컬러 보라 계열로 전환 (메인앱 녹색과 명확히 차별화) */
+  --p:#5B21B6;--pl:#8B5CF6;--pg:rgba(139,92,246,.12);
   --ac:#FF6B35;--bg:#F4F6F9;--card:#FFF;
   --tx:#1A2332;--ts:#5A6B7F;--th:#94A3B8;
   --bd:#E8ECF1;--bl:#F1F4F8;
@@ -461,7 +462,7 @@ body{
   background:linear-gradient(135deg,#F0FDF4,#ECFDF5);
   border:1.5px solid var(--pl);border-radius:10px;
   padding:9px 13px;margin-bottom:9px;
-  font-size:.72rem;font-weight:700;color:#0A6B5C;
+  font-size:.72rem;font-weight:700;color:#5B21B6;
   transition:all .3s;
 }
 .input-hint-banner.has-input{
@@ -1418,7 +1419,7 @@ textarea.if{
   padding-bottom:var(--safe-bottom);
 }
 .cb-hd{
-  background:linear-gradient(135deg,#0A6B5C,#12B89A);
+  background:linear-gradient(135deg,#5B21B6,#8B5CF6);
   padding:14px 16px 12px;
   display:flex;
   align-items:center;
@@ -1705,7 +1706,7 @@ textarea.if{
   bottom:calc(90px + var(--safe-bottom));
   left:50%;
   transform:translateX(-50%) translateY(20px);
-  background:linear-gradient(135deg,#0A6B5C,#12B89A);
+  background:linear-gradient(135deg,#5B21B6,#8B5CF6);
   color:#fff;
   padding:11px 20px;
   border-radius:30px;
@@ -2151,7 +2152,7 @@ input[type="file"]{
 /* ============================================================
    ★ 설정값
    ============================================================ */
-const APP_VER = 'v31.5-spare';
+const APP_VER = 'v31.6-spare';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwaGre5b025jL1of_znmu_EVg-CyqnrsAPXlc_nQkmuGHq-LZKhwJb9sDyQTdcUW4i9Pg/exec';
 const SPARE_URL = 'https://anhjjeon1.github.io/inspect-spare/';
 const LIMIT_FREE = 3;
@@ -2939,7 +2940,7 @@ function _normalizeRoomText(text){if(!text)return'';const t=text.replace(/\s+/g,
 A.toggleRoom=()=>{const grid=$('cdGrid'),btn=$('cdBtn');btn.classList.remove('err-shake');const isOpen=grid.classList.contains('show');if(isOpen){grid.classList.remove('show');btn.classList.remove('open');}else{grid.classList.add('show');btn.classList.add('open');}};
 A.pickRoom=(el)=>{const val=el.dataset.val;_setRoomValue(val);const label=$('cdLabel');label.textContent='✔ '+val;label.classList.remove('cd-placeholder');label.style.color='var(--p)';label.style.fontWeight='800';$('cdBtn').classList.remove('err-shake');document.querySelectorAll('.cd-item').forEach(i=>i.classList.remove('selected'));el.classList.add('selected');setTimeout(()=>{$('cdGrid').classList.remove('show');$('cdBtn').classList.remove('open');},150);const warn=$('roomWarnMsg');if(warn)warn.style.display='none';saveDraft();};
 function validateRoom(){if(!$('fRoom').value){showRoomWarn();const btn=$('cdBtn');btn.classList.remove('err-shake');void btn.offsetWidth;btn.classList.add('err-shake');$('cdGrid').classList.add('show');btn.classList.add('open');stat('⚠️ 점검 위치를 선택해주세요',true);btn.scrollIntoView({behavior:'smooth',block:'center'});return false;}return true;}
-function showRoomWarn(){let warn=$('roomWarnMsg');if(!warn){warn=document.createElement('div');warn.id='roomWarnMsg';warn.style.cssText='background:#FFF5F5;border:1.5px solid var(--dn);border-radius:10px;padding:10px 14px;font-size:.78rem;font-weight:700;color:var(--dn);display:flex;align-items:center;gap:8px;margin-top:8px;animation:shake .4s';warn.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> ① 위 <b style="color:#0A6B5C">점검 위치</b>를 먼저 선택한 후 저장하세요!';const btnSv=$('btnSv');btnSv.parentNode.insertBefore(warn,btnSv);}warn.style.display='flex';clearTimeout(warn._t);warn._t=setTimeout(()=>{if(warn)warn.style.display='none';},4000);}
+function showRoomWarn(){let warn=$('roomWarnMsg');if(!warn){warn=document.createElement('div');warn.id='roomWarnMsg';warn.style.cssText='background:#FFF5F5;border:1.5px solid var(--dn);border-radius:10px;padding:10px 14px;font-size:.78rem;font-weight:700;color:var(--dn);display:flex;align-items:center;gap:8px;margin-top:8px;animation:shake .4s';warn.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> ① 위 <b style="color:#5B21B6">점검 위치</b>를 먼저 선택한 후 저장하세요!';const btnSv=$('btnSv');btnSv.parentNode.insertBefore(warn,btnSv);}warn.style.display='flex';clearTimeout(warn._t);warn._t=setTimeout(()=>{if(warn)warn.style.display='none';},4000);}
 
 /* ── 전문가(직원) 모드 ── */
 A.setMode=m=>{if(m==='admin'){$('moPwd').classList.add('show');$('pwdInput').value='';$('pwdErr').style.display='none';setTimeout(()=>$('pwdInput').focus(),200);return;}mode='free';sessionStorage.removeItem('admin_token');updateQuotaUI();updatePassUI();};
@@ -3337,7 +3338,7 @@ A.pdf=()=>{
     /* v30.7: PDF에서는 "분석 완료 · 2차 검증 완료" 줄 제거 */
     const detailRaw=(it.detail||'').split('\n').filter(l=>!/분석\s*완료\s*·\s*2차\s*검증\s*완료/.test(l)).join('\n').replace(/\n{2,}/g,'\n').trim();
     const room=esc(it.room||'위치미지정'),type=esc(it.type||''),work=esc(it.work||''),sub=esc(it.sub||''),detail=esc(detailRaw);
-    const mTag=it.mode==='paid'?'<span style="font-size:9px;background:#03C75A;color:#fff;padding:2px 6px;border-radius:3px">이용권</span>':it.mode==='pro'?'<span style="font-size:9px;background:#7C3AED;color:#fff;padding:2px 6px;border-radius:3px">직원</span>':'<span style="font-size:9px;background:#E6F7F3;color:#0A6B5C;padding:2px 6px;border-radius:3px">무료</span>';
+    const mTag=it.mode==='paid'?'<span style="font-size:9px;background:#03C75A;color:#fff;padding:2px 6px;border-radius:3px">이용권</span>':it.mode==='pro'?'<span style="font-size:9px;background:#7C3AED;color:#fff;padding:2px 6px;border-radius:3px">직원</span>':'<span style="font-size:9px;background:#F3EFFF;color:#5B21B6;padding:2px 6px;border-radius:3px">무료</span>';
     const hasW=it.wImg&&it.wImg.startsWith('data:'),hasC=it.cImg&&it.cImg.startsWith('data:');
     let imgHtml='';
     if(hasW||hasC){
@@ -3348,14 +3349,14 @@ A.pdf=()=>{
     }
     items+=`<div class="pdf-item" style="border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-bottom:6px;break-inside:avoid;page-break-inside:avoid">
       <div style="padding:6px 12px;background:#F4F6F9;border-bottom:1px solid #eee;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <span style="display:inline-block;font-size:10px;font-weight:900;background:#0A6B5C;color:#fff;width:20px;height:20px;border-radius:4px;text-align:center;line-height:20px">${idx+1}</span>
+        <span style="display:inline-block;font-size:10px;font-weight:900;background:#5B21B6;color:#fff;width:20px;height:20px;border-radius:4px;text-align:center;line-height:20px">${idx+1}</span>
         <b style="font-size:14px">${room}</b>
         <span style="font-size:11px;font-weight:700;color:${tc};background:${tb};padding:2px 7px;border-radius:3px">${type}</span>
         ${mTag}
       </div>
       ${imgHtml}
       <div style="padding:8px 12px">
-        <div style="font-size:12px;font-weight:700;color:#0A6B5C;margin-bottom:4px">${work} → ${sub}</div>
+        <div style="font-size:12px;font-weight:700;color:#5B21B6;margin-bottom:4px">${work} → ${sub}</div>
         <div style="font-size:12px;color:#3A4B5F;line-height:1.6;white-space:pre-wrap">${detail}</div>
       </div>
     </div>`;
@@ -3367,8 +3368,8 @@ A.pdf=()=>{
 img{max-width:100%;display:block}
 @media print{@page{size:A4;margin:8mm}body{padding:0}.pdf-item{break-inside:avoid;page-break-inside:avoid}}</style></head>
 <body>
-<div style="text-align:center;margin-bottom:10px;padding-bottom:8px;border-bottom:3px solid #0A6B5C">
-  <div style="font-size:28px;font-weight:900;color:#0A6B5C;margin-bottom:8px;letter-spacing:-.5px">청개구리 사전점검 리포트</div>
+<div style="text-align:center;margin-bottom:10px;padding-bottom:8px;border-bottom:3px solid #5B21B6">
+  <div style="font-size:28px;font-weight:900;color:#5B21B6;margin-bottom:8px;letter-spacing:-.5px">청개구리 사전점검 리포트 <span style="background:#E74C3C;color:#fff;font-size:14px;padding:2px 8px;border-radius:4px;vertical-align:middle">SPARE</span></div>
   <div style="font-size:13px;font-weight:700;color:#5A6B7F">${info}</div>
   <div style="font-size:10px;color:#94A3B8;margin-top:4px">${dateStr} 작성 | 총 ${list.length}건 | ${APP_VER}</div>
 </div>
