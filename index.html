@@ -1751,6 +1751,15 @@ input[type="file"]{
 </style>
 </head>
 <body>
+<!-- v31.5-spare: JS 미지원/파싱 실패 시 메인앱 복귀 링크 -->
+<noscript>
+  <div style="padding:32px 20px;text-align:center;font-family:-apple-system,'Noto Sans KR',sans-serif;max-width:500px;margin:40px auto;background:#fff;border:2px solid #5B21B6;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.1)">
+    <h1 style="color:#5B21B6;margin:0 0 12px">🐸 청개구리 사전점검 <span style="background:#E74C3C;color:#fff;font-size:12px;padding:2px 8px;border-radius:4px;vertical-align:middle">SPARE</span></h1>
+    <p style="color:#5A6B7F;margin:0 0 20px;line-height:1.6">이 앱은 JavaScript가 필요합니다.<br>브라우저 설정에서 활성화하거나<br>아래 <b>메인 앱</b>을 이용해주세요.</p>
+    <a href="https://frogsash.co.kr/inspect/" style="display:inline-block;padding:14px 32px;background:#1B6B28;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px">✅ 메인 앱으로 이동</a>
+    <p style="color:#94A3B8;margin:20px 0 0;font-size:13px">📞 문의: 010-2322-0949</p>
+  </div>
+</noscript>
 <div class="app">
 <div id="ptitle" style="display:none"></div>
 
@@ -1760,6 +1769,10 @@ input[type="file"]{
     <div class="hd-title" style="font-size:1.26rem">청개구리 AI점검 <span style="background:#E74C3C;color:#fff;font-size:.55rem;padding:1px 5px;border-radius:4px;vertical-align:middle">SPARE</span></div>
     <span class="tag tag-v" id="verTag" data-ver onclick="A.devTap()" style="position:absolute;right:14px">v25.0</span>
     <span id="passTag" style="display:none">기부형 앱</span>
+  </div>
+  <!-- v31.5-spare: 메인 복구 확인 버튼 -->
+  <div style="padding:0 14px 8px;text-align:center">
+    <button id="btnMainCheck" onclick="A.checkMainRecovery()" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:.68rem;font-weight:700;padding:4px 12px;border-radius:16px;cursor:pointer;font-family:inherit"><i class="fa-solid fa-rotate-right"></i> 메인 복구 확인</button>
   </div>
   <div id="logoImg" style="display:none"></div>
 </header>
@@ -2115,10 +2128,30 @@ input[type="file"]{
 
 <!-- PDF 라이브러리 제거: HTML 파일 저장 방식으로 변경 -->
 <script>
+/* v31.5-spare: 치명적 초기 오류 역방향 failover — SPARE 실패 시 메인앱으로 */
+(function(){
+  let _initFailShown=false;
+  function offerFailover(reason){
+    if(_initFailShown)return;_initFailShown=true;
+    if(window.A&&typeof window.A.startAI==='function')return;
+    setTimeout(function(){
+      if(confirm('⚠️ SPARE 앱 초기 로드 오류 ('+reason+').\n\n메인 앱으로 이동하시겠습니까?')){
+        window.location.href='https://frogsash.co.kr/inspect/';
+      }
+    },100);
+  }
+  window.addEventListener('error',function(e){offerFailover(e.message||'스크립트 오류');},true);
+  window.addEventListener('unhandledrejection',function(e){offerFailover(e.reason?.message||'비동기 오류');});
+  setTimeout(function(){
+    if(!window.A||typeof window.A.startAI!=='function'){
+      offerFailover('앱 초기화 타임아웃');
+    }
+  },10000);
+})();
 /* ============================================================
    ★ 설정값
    ============================================================ */
-const APP_VER = 'v31.4-spare';
+const APP_VER = 'v31.5-spare';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwaGre5b025jL1of_znmu_EVg-CyqnrsAPXlc_nQkmuGHq-LZKhwJb9sDyQTdcUW4i9Pg/exec';
 const SPARE_URL = 'https://anhjjeon1.github.io/inspect-spare/';
 const LIMIT_FREE = 3;
@@ -2182,14 +2215,44 @@ async function spareFailover(){
     }else{
       if(now-data.ts>24*60*60*1000){console.warn('[failover] 구버전 24h 초과');return;}
     }
-    if(data.date&&data.date!==new Date().toDateString()){
-      console.warn('[failover] 날짜 불일치');return;
+    /* v31.5-spare: 자정 경계 ±1일 허용 — 23:59 발행 토큰이 00:01에 도착해도 통과 */
+    if(data.date){
+      const T=new Date();
+      const yest=new Date(T.getTime()-86400000).toDateString();
+      const todayD=T.toDateString();
+      const tomo=new Date(T.getTime()+86400000).toDateString();
+      if(data.date!==yest&&data.date!==todayD&&data.date!==tomo){
+        console.warn('[failover] 날짜 허용 범위 이탈:',data.date);return;
+      }
     }
     const today=new Date().toDateString();
     localStorage.setItem('frog_pass',JSON.stringify({date:today,active:true,type:'paid',code:'FAILOVER',activatedAt:new Date().toISOString(),tokenExp:data.exp||null}));
     setTimeout(()=>alert('💚 장애 대체 앱입니다.\n이용권이 확인되어 무료 100회가 활성화되었습니다.'),500);
   }catch(e){console.warn('failover 토큰 파싱 실패:',e);}
 })();
+
+/* v31.5-spare: 메인 앱 복구 확인 — 사용자가 버튼 눌러 메인 생존 체크 후 이동 */
+window.A=window.A||{};
+A.checkMainRecovery=async function(){
+  const btn=document.getElementById('btnMainCheck');
+  if(!btn)return;
+  const origHtml=btn.innerHTML;
+  btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 확인 중...';
+  try{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),5000);
+    await fetch('https://frogsash.co.kr/inspect/',{method:'HEAD',mode:'no-cors',cache:'no-store',signal:ctrl.signal});
+    clearTimeout(tid);
+    btn.disabled=false;btn.innerHTML=origHtml;
+    if(confirm('✅ 메인 앱이 정상 작동 중입니다.\n메인 앱으로 이동하시겠습니까?\n\n※ SPARE에서 입력한 데이터는 이전되지 않습니다.')){
+      window.location.href='https://frogsash.co.kr/inspect/';
+    }
+  }catch(e){
+    btn.disabled=false;btn.innerHTML=origHtml;
+    alert('⚠️ 메인 앱이 아직 복구되지 않았습니다.\n잠시 후 다시 시도해주세요.');
+  }
+};
 let mode='free';
 window.A={};
 
