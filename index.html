@@ -2118,7 +2118,7 @@ input[type="file"]{
 /* ============================================================
    ★ 설정값
    ============================================================ */
-const APP_VER = 'v31.3-spare';
+const APP_VER = 'v31.4-spare';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwaGre5b025jL1of_znmu_EVg-CyqnrsAPXlc_nQkmuGHq-LZKhwJb9sDyQTdcUW4i9Pg/exec';
 const SPARE_URL = 'https://anhjjeon1.github.io/inspect-spare/';
 const LIMIT_FREE = 3;
@@ -3003,7 +3003,8 @@ async function runAI(){
 [JSON]
 {"work":"공종","sub":"세부공종","type":"하자유형","severity":"경미|보통|중대","detail":"■ 하자현상: ...\\n■ 판정근거: ...\\n■ 심각도: ...\\n■ 시정방법: ...\\n■ 비고: ..."}`;
 
-    const GEMINI_KEY=atob('QUl6YVN5Q2lTQjY5ZktZd21sVG8wajRXdElOd3NSNE9rU05jcWFZ');
+    /* v31.4-spare: SPARE 전용 Gemini 키 (메인앱과 분리 — rate limit/failover 독립성 확보) */
+    const GEMINI_KEY=atob('QUl6YVN5RE5vX1FoSXFvT3l1eVh5d1VZeWV0aXBiZjRSc3RJTm44');
     const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+GEMINI_KEY;
 
     /* ── 1차 분석 호출 ── */
