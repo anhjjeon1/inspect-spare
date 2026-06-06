@@ -2224,7 +2224,7 @@ input[type="file"]{
 /* ============================================================
    ★ 설정값
    ============================================================ */
-const APP_VER = 'v34.12-spare';
+const APP_VER = 'v34.13-spare';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxXiy2tR6pRHpnqsR1TY6a0gFQiVuZMYvtzFJGOQubJ-ENCA9u8t4tvtUEB_-NNbVDd9Q/exec';
 const SPARE_URL = 'https://anhjjeon1.github.io/inspect-spare/';
 const LIMIT_FREE = 2;
@@ -3354,9 +3354,6 @@ ${d1.detail||''}
       severity==='중대'?'\n⛔ [중대하자 — 즉시 시정 요청]':
       severity==='보통'?'\n⚠️ [보통 — 시정 권고]':
       severity==='경미'?'\n✅ [경미 — 기록 후 보수]':'';
-    const modeBadge=hasUserInput?'📝 입력 기반':'📷 사진 기반';
-    const badge=`\n${severityBadge}\n${modeBadge} 분석 완료 · 2차 검증 완료 (참고용)`;
-
     /* v32.0-spare: 품질 평가 — failed면 쿼터 차감 없이 재분석 유도 */
     const _q=_assessAIQuality(d, ui);
     if(_q.quality==='failed'){
@@ -3369,10 +3366,17 @@ ${d1.detail||''}
       return;
     }
 
+    /* v34.13-spare: 결과 라벨 구분 — 진짜 AI 정밀분석(good) vs 입력 기반 자동분류(poor·정밀판정 보류) */
+    const _isPoor=_q.quality==='poor';
+    const modeBadge=_isPoor
+      ?(hasUserInput?'📝 입력 기반 자동 분류 · AI 정밀판정 보류':'📷 사진 기반 자동 분류 · AI 정밀판정 보류')
+      :'🤖 AI 정밀 분석 완료 · 2차 검증 완료';
+    const badge=`\n${severityBadge}\n${modeBadge} (참고용)`;
+
     _applyAIResult(d.work||'',d.sub||'',d.type||'');
     const workInfo=`[공종] ${d.work||''} [세부] ${d.sub||''} [유형] ${d.type||''}\n\n`;
     /* v32.0-spare: poor 품질이면 재분석 권장 안내 추가 */
-    const poorBadge=_q.quality==='poor'?`\n\n⚠️ 분석 신뢰도가 낮을 수 있습니다 (${_q.reason}). "수정 후 재분석" 버튼으로 다시 시도해보세요.`:'';
+    const poorBadge=_isPoor?`\n\n⚠️ 분석 신뢰도가 낮을 수 있습니다 (${_q.reason}). "수정 후 재분석" 버튼으로 다시 시도해보세요.`:'';
     det.value=workInfo+(d.detail||'')+badge+poorBadge;
     /* textarea 높이 자동 조절 */
     det.style.height='auto';det.style.height=det.scrollHeight+'px';
@@ -3631,7 +3635,7 @@ A.pdf=()=>{
     const isSafe=it.type==='허용범위';
     const tc=isSafe?'#059669':'#E74C3C',tb=isSafe?'#ECFDF5':'#FFF5F5';
     /* v30.7: PDF에서는 "분석 완료 · 2차 검증 완료" 줄 제거 */
-    const detailRaw=(it.detail||'').split('\n').filter(l=>!/분석\s*완료\s*·\s*2차\s*검증\s*완료/.test(l)).join('\n').replace(/\n{2,}/g,'\n').trim();
+    const detailRaw=(it.detail||'').split('\n').filter(l=>!/(분석\s*완료\s*·\s*2차\s*검증\s*완료|자동\s*분류\s*·\s*AI\s*정밀판정\s*보류)/.test(l)).join('\n').replace(/\n{2,}/g,'\n').trim();
     const room=esc(it.room||'위치미지정'),type=esc(it.type||''),work=esc(it.work||''),sub=esc(it.sub||''),detail=esc(detailRaw);
     const mTag=it.mode==='paid'?'<span style="font-size:9px;background:#03C75A;color:#fff;padding:2px 6px;border-radius:3px">이용권</span>':it.mode==='pro'?'<span style="font-size:9px;background:#7C3AED;color:#fff;padding:2px 6px;border-radius:3px">직원</span>':'<span style="font-size:9px;background:#F3EFFF;color:#5B21B6;padding:2px 6px;border-radius:3px">무료</span>';
     const hasW=it.wImg&&it.wImg.startsWith('data:'),hasC=it.cImg&&it.cImg.startsWith('data:');
