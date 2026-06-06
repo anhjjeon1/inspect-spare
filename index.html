@@ -2224,7 +2224,7 @@ input[type="file"]{
 /* ============================================================
    ★ 설정값
    ============================================================ */
-const APP_VER = 'v34.13-spare';
+const APP_VER = 'v34.15-spare';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxXiy2tR6pRHpnqsR1TY6a0gFQiVuZMYvtzFJGOQubJ-ENCA9u8t4tvtUEB_-NNbVDd9Q/exec';
 const SPARE_URL = 'https://anhjjeon1.github.io/inspect-spare/';
 const LIMIT_FREE = 2;
@@ -2407,6 +2407,7 @@ const $=id=>document.getElementById(id);
    - 하자정보(fWork/fSub/fType): 음성→WM 키워드 매칭 선택
    ============================================================ */
 const _SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let _ttsActive=false; /* v34.15: 음성안내(TTS) 재생 중엔 STT 결과 무시 — 피드백 루프 차단 */
 let _recActive = null;
 let _currentRec = null;
 
@@ -2444,6 +2445,7 @@ function _mkRec(onResult, onEnd, opts){
     /* v32.3-spare: 삼성 인터넷에서 동일/포함관계 final 중복 누적 버그 대응.
        한쪽이 다른 쪽의 prefix면 긴 쪽만 유지, 완전히 다른 발화는 연결. */
     rec.onresult = (e) => {
+      if(_ttsActive) return; /* v34.15: 음성안내(TTS) 재생 중엔 입력 무시 */
       const finalParts = [];
       let interim = '';
       for(let i = 0; i < e.results.length; i++){
@@ -2496,6 +2498,7 @@ function _mkRec(onResult, onEnd, opts){
     rec._lfStart = () => {};
   } else {
     rec.onresult = (e) => {
+      if(_ttsActive) return; /* v34.15: 음성안내(TTS) 재생 중엔 입력 무시 */
       try{
         const transcript = (e.results[0][0].transcript||'').trim();
         if(transcript) onResult(transcript);
@@ -2646,8 +2649,9 @@ function _scheduleVoiceAI(text){
     const ai = document.getElementById('btnRunAI');
     if(ai && !ai.disabled && ($('fUser')?.value||'').trim()){
       ai.classList.add('attn');
+      _speakHint('하자 내용 입력이 끝났으면 AI 분석 버튼을 눌러주세요.','ai'); /* v34.13-spare */
     }
-  }, 3000);
+  }, 1500); /* v34.16: 3000→1500 흐름 단축 */
   const m = _matchWorkSubType(t);
   if(!m){
     det.value = `🔍 "${t}"\n\n카테고리 자동 매칭 실패.\n사진 촬영 후 AI분석 버튼을 눌러 정밀 분석을 실행하세요.`;
@@ -2887,7 +2891,7 @@ A.onUserInput=(el)=>{
     _autoMatchDebounce(el.value.trim());
     _textInputAttnTimer = setTimeout(()=>{
       const ai = document.getElementById('btnRunAI');
-      if(ai && !ai.disabled && el.value.trim()) ai.classList.add('attn');
+      if(ai && !ai.disabled && el.value.trim()){ ai.classList.add('attn'); _speakHint('하자 내용 입력이 끝났으면 AI 분석 버튼을 눌러주세요.','ai'); } /* v34.13-spare */
     }, 3000);
   }else{
     const ai = document.getElementById('btnRunAI');
@@ -3111,10 +3115,17 @@ function autoSave(savedW,savedC,savedDetail){
   reset();
   if(roomMissing)toast('<i class="fa-solid fa-circle-check"></i> 자동 저장! ⚠️ 위치는 미지정으로 저장됨',true,3500);
   else toast(`<i class="fa-solid fa-circle-check"></i> <b>${room}</b> 자동 저장 완료!`);
-  stat('✅ 자동 저장 완료 — ➡️ 다음입력 버튼을 눌러 계속하세요');
-  /* v30.9: 다음입력 버튼 강조 애니메이션 부여 */
+  stat('✅ 자동 저장 완료 — 다음 하자를 촬영하세요');
+  /* v30.9: 다음입력 버튼 강조 (v34.14: 안전망으로 유지) */
   const nxt=$('btnNext');if(nxt){nxt.classList.add('pulse-next');}
-    setTimeout(()=>{document.querySelector('.lh').scrollIntoView({behavior:'smooth'});setTimeout(()=>step(1),800);},600);
+  /* v34.14-spare: 분석 후 자동으로 최상단 사진촬영 영역으로 이동 + 음성 안내 */
+  setTimeout(()=>{
+    step(1);
+    const _top=document.querySelector('.sec-t .n');
+    if(_top)_top.scrollIntoView({behavior:'smooth',block:'start'});
+    else window.scrollTo({top:0,behavior:'smooth'});
+    _speakHint('저장됐습니다. 다음 하자를 촬영하세요.','next');
+  },700);
 }
 
 /* ── 위치 선택 ── */
@@ -3201,10 +3212,32 @@ function _speakNext(){
 }
 if('speechSynthesis' in window){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();}
 
+/* v34.13-spare: 짧은 1회성 음성 힌트 (전체 음성안내 재생 중이면 생략, 같은 key 중복 억제) */
+let _hintSpokenKey='';
+function _speakHint(text, key){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    if(_vPlaying) return;
+    if(key && _hintSpokenKey===key) return;
+    _hintSpokenKey=key||'';
+    /* v34.15: 말하기 전 마이크 정지 — TTS가 STT에 재포착돼 입력칸 덮는 피드백 루프 차단 */
+    try{ if(typeof _stopRec==='function') _stopRec(); }catch(e){}
+    _ttsActive=true;
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ko-KR'; u.rate=1.05; u.pitch=1;
+    const vs=window.speechSynthesis.getVoices();
+    const ko=vs.find(v=>/ko/i.test(v.lang)); if(ko)u.voice=ko;
+    u.onend=()=>{ setTimeout(()=>{ _ttsActive=false; }, 400); };
+    u.onerror=()=>{ _ttsActive=false; };
+    window.speechSynthesis.speak(u);
+  }catch(e){ _ttsActive=false; }
+}
+
 /* ── 이미지 리사이즈 (v32.9: 768 타일 유지용 760px 한도, JPEG 70% 압축) ── */
 function resizeImg(file,maxPx=760){return new Promise(r=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(w>maxPx||h>maxPx){const ratio=Math.min(maxPx/w,maxPx/h);w=Math.round(w*ratio);h=Math.round(h*ratio);}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);const dataUrl=cv.toDataURL('image/jpeg',0.7);r({data:dataUrl.split(',')[1],mimeType:'image/jpeg'});};img.src=URL.createObjectURL(file);});}
 
 async function runAI(){
+  _hintSpokenKey=''; /* v34.13-spare: 새 분석 시작 시 음성 힌트 키 리셋 */
   const det=$('fDetail'), ui=$('fUser').value.trim();
   const activeMode=getActiveMode();
   const proExtra=(activeMode==='admin')?'\n[전문모드] 시공기준서·KS규격·국토부 하자판정 기준 상세 인용.':'';
@@ -3239,7 +3272,8 @@ async function runAI(){
       detEl.value='⚠️ '+reason+'\n\n➡️ AI 분석 버튼을 다시 눌러주세요.\n※ 하자내용을 입력하면 더 정확합니다.';
       stat('⚠️ '+reason+' — AI 분석 버튼을 다시 눌러주세요',true);
     }
-    $('btnReanalyze').style.display='inline-flex';
+    const _rbF=$('btnReanalyze');_rbF.style.display='inline-flex';_rbF.classList.add('highlight'); /* v34.13-spare: 깜빡임 */
+    _speakHint('AI 분석에 실패했습니다. 수정 후 재분석 버튼을 눌러주세요.','re'); /* v34.13-spare */
     $('btnRunAI').disabled=false;$('btnRunAI').style.opacity='1';
     saveDraft();
   }
@@ -3362,6 +3396,7 @@ ${d1.detail||''}
       if(wF||cF){const b=$('btnReanalyze');b.style.display='inline-flex';b.classList.add('highlight');}
       $('btnRunAI').disabled=false;$('btnRunAI').style.opacity='1';
       stat(`⚠️ 분석 실패 — 재분석을 권장합니다 (쿼터 차감 없음)`,true);
+      _speakHint('AI 분석이 완료되지 않았습니다. 수정 후 재분석 버튼을 눌러주세요.','re'); /* v34.13-spare */
       updateQuotaUI();
       return;
     }
@@ -3397,7 +3432,7 @@ ${d1.detail||''}
     const remaining=getRemaining();
     const isFreeRe=_reanalyzeSession.sig===_sig&&_reanalyzeSession.count>0;
     const reTag=isFreeRe?` [재분석 ${_reanalyzeSession.count}/${REANALYZE_FREE_MAX} 무료]`:'';
-    if(_q.quality==='poor'){stat(`⚠️ 분석 완료 — 재분석 권장${reTag}`,true);}
+    if(_q.quality==='poor'){stat(`⚠️ 분석 완료 — 재분석 권장${reTag}`,true);_speakHint('분석 신뢰도가 낮습니다. 수정 후 재분석 버튼을 눌러주세요.','re');} /* v34.13-spare */
     else if(hasUserInput){stat(`📝 입력 기반 정밀 분석 완료 (잔여 ${remaining}건)${reTag}`);}
     else{stat(`✅ 사진 분석 완료 — 자동 저장 중... (잔여 ${remaining}건)${reTag}`);}
     /* AI 분석 완료 후 자동 저장 — detail을 즉시 캡처 */
@@ -3587,7 +3622,7 @@ function renderItem(it){
   $('lCnt').textContent=list.length;
 }
 function updateModeLabel(){const el=$('lMode');if(!list.length){el.style.display='none';return;}const hasPaid=list.some(i=>i.mode==='paid'),hasPro=list.some(i=>i.mode==='pro');if(hasPaid){el.textContent='이용권점검';el.style.background='var(--nvb)';el.style.color='#059669';}else if(hasPro){el.textContent='직원점검';el.style.background='var(--pub)';el.style.color='var(--pu)';}else{el.textContent='무료체험';el.style.background='var(--pg)';el.style.color='var(--p)';}el.style.display='inline-block';}
-function reset(){const _nxt=$('btnNext');if(_nxt)_nxt.classList.remove('pulse-next');$('inW').value='';$('inC').value='';wF=null;cF=null;['pvW','pvC'].forEach(i=>{$(i).style.display='none';$(i).src='';});['rtW','rtC'].forEach(i=>{$(i).style.display='none';});$('fUser').value='';$('fDetail').value='';$('fWork').value='';A.onWork();$('fRoom').value='';const label=$('cdLabel');label.textContent='위치 선택';label.classList.add('cd-placeholder');label.style.color='';label.style.fontWeight='';$('cdBtn').classList.remove('err-shake');document.querySelectorAll('.cd-item').forEach(i=>i.classList.remove('selected'));// 입력 모드 배너 리셋
+function reset(){_hintSpokenKey='';const _aibR=$('btnRunAI');if(_aibR)_aibR.classList.remove('attn');const _rbR=$('btnReanalyze');if(_rbR)_rbR.classList.remove('highlight');const _nxt=$('btnNext');if(_nxt)_nxt.classList.remove('pulse-next');$('inW').value='';$('inC').value='';wF=null;cF=null;['pvW','pvC'].forEach(i=>{$(i).style.display='none';$(i).src='';});['rtW','rtC'].forEach(i=>{$(i).style.display='none';});$('fUser').value='';$('fDetail').value='';$('fWork').value='';A.onWork();$('fRoom').value='';const label=$('cdLabel');label.textContent='위치 선택';label.classList.add('cd-placeholder');label.style.color='';label.style.fontWeight='';$('cdBtn').classList.remove('err-shake');document.querySelectorAll('.cd-item').forEach(i=>i.classList.remove('selected'));// 입력 모드 배너 리셋
 const el=$('fUser');el.classList.remove('has-value');const banner=$('inputHintBanner');if(banner){banner.classList.remove('has-input');const span=banner.querySelector('span:first-of-type');if(span)span.innerHTML='하자 내용을 입력하면 <b>입력 기반 정밀 분석</b>으로 전환됩니다';const badge=$('inputModeBadge');if(badge){badge.className='input-mode-badge photo-mode';badge.innerHTML='📷 사진 모드';}}/* fAgree는 한번 체크하면 세션 내 유지 (reset에서 해제하지 않음) */
 /* 태그 UI 초기화 */
 $('aiTags').style.display='none';$('afSelects').style.display='none';
